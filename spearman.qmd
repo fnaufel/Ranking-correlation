@@ -1,0 +1,190 @@
+---
+title: "Spearman's ranking correlation"
+author: "Fernando Náufel"
+date: now
+date-format: "DD/MM/YYYY HH:mm"
+lang: en
+
+bibliography: bibliography.bib
+csl: chicago-fullnote-bibliography.csl
+
+format:
+  html:
+    toc: true  
+    toc-depth: 3
+    number-depth: 3
+    theme: 
+      - journal
+      - _custom.scss
+    link-external-icon: true
+    link-external-newwindow: true
+    link-external-filter: ^(?:http:|https:)\/\/fnaufel\.github\.io
+    df-print: paged
+    code-link: true
+    code-copy: true
+    code-tools: true
+    self-contained: true
+---
+
+{{< include _math.qmd >}}
+
+# Setup
+
+```{r setup}
+source('_setup.R')
+```
+
+
+# Definition
+
+Spearman's $\rho$ between random variables $X$ and $Y$ is simply the linear correlation of the associated rank variables $R(X)$ and $R(Y)$.
+
+
+# Functions
+
+```{r}
+example <- function(x, y) {
+  
+  cat('x          =', x, '\n')
+  cat('y          =', y, '\n')
+  cat('linear cor =', cor(x, y), '\n\n')
+
+  cat('rank(x)    =', rank(x), '\n')
+  cat('rank(y)    =', rank(y), '\n')
+  cat('spear. cor =', cor(x, y, method = 'spearman'), '\n\n')
+    
+}
+
+scatter_plot <- function(x, y) {
+  
+  tibble(x, y) %>% 
+    ggplot(aes(x, y)) +
+      geom_point() +
+      geom_smooth(formula = y ~ x, method = 'lm', se = FALSE) +
+      labs(title = 'Original values')
+  
+}
+
+scatter_plot_r <- function(x, y) {
+  
+  x <- rank(x)
+  y <- rank(y)
+  
+  tibble(x, y) %>% 
+    ggplot(aes(x, y)) +
+      geom_point() +
+      geom_smooth(formula = y ~ x, method = 'lm', se = FALSE) +
+      labs(title = 'Ranks')
+  
+}
+
+```
+
+
+# Examples
+
+## Very small
+
+```{r}
+x <- c(1, 2, 3)
+y <- c(20, 25, 5)
+example(x, y)
+```
+
+```{r}
+scatter_plot(x, y)
+scatter_plot_r(x, y)
+```
+
+
+## With ties
+
+```{r}
+x <- c(1, 2, 2, 3)
+y <- c(20, 21, 5, 6)
+example(x, y)
+```
+
+Ties are not a problem.
+
+```{r}
+scatter_plot(x, y)
+scatter_plot_r(x, y)
+```
+
+```{r}
+y <- c(1, 2, 2, 3)
+x <- c(20, 21, 5, 6)
+example(x, y)
+```
+
+```{r}
+scatter_plot(x, y)
+scatter_plot_r(x, y)
+```
+
+
+## People ranked two ways
+
+```{r}
+set.seed(1234)
+
+ranking_1 <- sample(LETTERS)
+ranking_2 <- sample(LETTERS)
+
+cat('Ranking 1:', ranking_1, '\n')
+cat('Ranking 2:', ranking_2, '\n')
+```
+
+I need to write these rankings as pairs:
+
+* Person `A`: $(`r match('A', ranking_1)`, `r match('A', ranking_2)`)$
+* Person `B`: $(`r match('B', ranking_1)`, `r match('B', ranking_2)`)$
+* etc.
+
+This can be done by the `order` function:
+
+```{r}
+order(ranking_1)
+order(ranking_2)
+```
+
+```{r}
+pairing <- tibble(
+  person = LETTERS,
+  r1 = order(ranking_1),
+  r2 = order(ranking_2)
+)
+
+pairing
+```
+
+```{r}
+scatter_plot(pairing$r1, pairing$r2)
+```
+
+The plot says "original values", but these are already the ranks!
+
+This is why the scatter plot of the ranks looks exactly the same:
+
+```{r}
+scatter_plot_r(pairing$r1, pairing$r2)
+```
+
+```{r}
+example(pairing$r1, pairing$r2)
+```
+
+::: {.callout-note title="When `rank` is idempotent"}
+
+If $x$ contains all integer values between $1$ and $n$, with no duplicates, then $\operatorname{rank}(x) = x$.
+
+:::
+
+
+## An example similar to DWARFF
+
+See <https://fnaufel.github.io/2024-DWARFF-Romulo/correlacao-ranking-expert-list.html>.
+
+???
+
